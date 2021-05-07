@@ -1,0 +1,135 @@
+#=============================================================================================================
+#SECTION 1 - CREATION OF MAP - SECTION 1 - CREATION OF MAP - SECTION 1 - CREATION OF MAP - SECTION 1
+#=============================================================================================================
+%matplotlib notebook
+
+import geopandas as gpd
+import pandas as pd
+from shapely.geometry import Point, LineString, Polygon
+import matplotlib.pyplot as plt
+from cartopy.feature import ShapelyFeature
+import cartopy.crs as ccrs
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
+
+plt.ion()
+
+def generate_handles(labels, colors, edge='k', alpha=1):
+    lc = len(colors)  # get the length of the color list
+    handles = []
+    for i in range(len(labels)):
+        handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors[i % lc], edgecolor=edge, alpha=alpha))
+    return handles
+
+def scale_bar(ax, location=(0.92, 0.95)):
+    llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
+    sbllx = (llx1 + llx0) / 2
+    sblly = lly0 + (lly1 - lly0) * location[1]
+
+    tmc = ccrs.TransverseMercator(sbllx, sblly)
+    x0, x1, y0, y1 = ax.get_extent(tmc)
+    sbx = x0 + (x1 - x0) * location[0]
+    sby = y0 + (y1 - y0) * location[1]
+
+    plt.plot([sbx, sbx - 20000], [sby, sby], color='k', linewidth=9, transform=tmc)
+    plt.plot([sbx, sbx - 10000], [sby, sby], color='k', linewidth=6, transform=tmc)
+    plt.plot([sbx-10000, sbx - 20000], [sby, sby], color='w', linewidth=6, transform=tmc)
+
+    plt.text(sbx, sby-4500, '20 km', transform=tmc, fontsize=8)
+    plt.text(sbx-12500, sby-4500, '10 km', transform=tmc, fontsize=8)
+    plt.text(sbx-24500, sby-4500, '0 km', transform=tmc, fontsize=8)
+
+chitt = gpd.read_file('BangladeshData/chittagong.shp')
+
+#=============================================================================================================
+ward = gpd.read_file('BangladeshData/chittwards.shp')
+towns = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
+#road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
+school = gpd.read_file('BangladeshData/hotosm_bgd_southeast_education_facilities_points_shp/hotosm_bgd_southeast_education_facilities_points.shp')
+hosp = gpd.read_file('BangladeshData/hotosm_bgd_southeast_health_facilities_points_shp/hotosm_bgd_southeast_health_facilities_points.shp')
+#=============================================================================================================
+#DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK 
+#CHECK CRS OF ALL LAYERS
+#=============================================================================================================
+print('Section 1: Close up map of the Chittagong region')
+
+myFig2 = plt.figure(figsize=(12, 12))  
+
+myCRS = ccrs.UTM(29)  
+
+ax = plt.axes(projection=ccrs.Mercator()) 
+#=============================================================================================================
+#SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__
+#=============================================================================================================
+chitt_feature = ShapelyFeature(chitt['geometry'], myCRS, edgecolor='k', facecolor='w')
+xmin, ymin, xmax, ymax = chitt.total_bounds
+ax.add_feature(chitt_feature) 
+
+ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
+#=============================================================================================================
+clippedtown = gpd.clip(towns, chitt)
+clippedhosp = gpd.clip(hosp, chitt)
+#clippedroad = gpd.clip(road, chitt)
+clippedschool = gpd.clip(school, chitt)
+#=============================================================================================================
+#road_feat = ShapelyFeature(clippedroad['geometry'], myCRS, 
+#                            edgecolor='mediumblue', 
+#                            facecolor='mediumblue',
+#                            linewidth=1)
+#ax.add_feature(road_feat) #have removed roads from displaying as they resulted in a messy appearance
+
+school_handle = ax.plot(school.geometry.x, school.geometry.y, 's', color='red', ms=2, transform=myCRS)
+hosp_handle = ax.plot(clippedhosp.geometry.x, clippedhosp.geometry.y, 's', color='blue', ms=2, transform=myCRS)
+town_handle = ax.plot(clippedtown.geometry.x, clippedtown.geometry.y, 's', color='yellow', ms=4, transform=myCRS)
+#=============================================================================================================
+ward_colors = ['brown', 'chartreuse', 'springgreen', 'cyan', 'lime', 'turquoise', 'green', 'pink', 'orange', 'black', 'indigo']
+
+ward_names = list(ward.ADM2_EN.unique())
+ward_names.sort() 
+
+for i, name in enumerate(ward_names):
+    feat = ShapelyFeature(ward['geometry'][ward['ADM2_EN'] == name], myCRS, 
+                          edgecolor='k',
+                          facecolor=ward_colors[i],
+                          linewidth=1,
+                          alpha=0.25)
+    ax.add_feature(feat)
+#=============================================================================================================
+#making a legend
+ward_handles = generate_handles(ward.ADM2_EN.unique(), ward_colors, alpha=0.25)
+
+hosp_handle = generate_handles(['name'], ['mediumblue'])
+school_handle = generate_handles(['name'], ['red'])
+town_handle = generate_handles(['name'], ['yellow'])
+
+nice_names = [name.title() for name in ward_names]
+
+handles = ward_handles + hosp_handle + school_handle + town_handle 
+labels = nice_names + ['Hospitals', 'Schools', 'Towns']
+
+leg = ax.legend(handles, labels, title='Legend', title_fontsize=12, 
+              fontsize=10, loc='lower left', frameon=True, framealpha=1)
+
+#=============================================================================================================
+gridlines = ax.gridlines(draw_labels=True,
+                         xlocs=[-8, -7.5, -7, -6.5, -6, -5.5], 
+                         ylocs=[54, 54.5, 55, 55.5])
+gridlines.left_labels = False
+gridlines.bottom_labels = False 
+ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
+#=============================================================================================================
+for i, row in clippedtown.iterrows():
+    x, y = row.geometry.x, row.geometry.y
+    plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) 
+#=============================================================================================================
+scale_bar(ax)
+#=============================================================================================================
+#START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
+#=============================================================================================================
+print('Section 2: Analysis')
+
+num_ward = len(ward.ADM2_EN.unique())
+print('1) Number of administrative wards within Chittagong state: {}'.format(num_ward)) 
+#=============================================================================================================
+
+print('2) Table displaying population, education and hospital facilities within each administrative state.')
