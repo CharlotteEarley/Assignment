@@ -1,6 +1,8 @@
 %matplotlib notebook
 
 import geopandas as gpd
+import pandas as pd
+from shapely.geometry import Point, LineString, Polygon
 import matplotlib.pyplot as plt
 from cartopy.feature import ShapelyFeature
 import cartopy.crs as ccrs
@@ -10,7 +12,7 @@ import matplotlib.lines as mlines
 plt.ion()
 
 def generate_handles(labels, colors, edge='k', alpha=1):
-    lc = len(colors)  # get the length of the color list
+    lc = len(colors) 
     handles = []
     for i in range(len(labels)):
         handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors[i % lc], edgecolor=edge, alpha=alpha))
@@ -39,7 +41,15 @@ outline = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDoutline.shp'
 #=============================================================================================================
 ward = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDward.shp')
 water = gpd.read_file('BangladeshData/bgd_watcrsa_1m_iscgm/bgd_watcrsa_1m_iscgm.shp')
-towns = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
+town = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
+road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
+#=============================================================================================================
+print('Map 1 - Introduction to Bangladesh')
+print('Bangladesh is a country in South East Asia known for it''s large, growing population, and for having the world''s longest beach.')
+print('Bangladesh faces a range of environmental and economic pressures. This country is one of the lowest lying in the')
+print('world and is predicted to lose a large section of land to increasing sea level rises.')
+print('It also has the largest mangrove forest in the world, the Sundarbans, which is home to many endangered species.')
+print('Below figure 1 are some descriptive statistics to provide a context for Bangladesh.')
 #=============================================================================================================
 myFig = plt.figure(figsize=(10, 10))  
 
@@ -51,10 +61,7 @@ outline_feature = ShapelyFeature(outline['geometry'], myCRS, edgecolor='k', face
 xmin, ymin, xmax, ymax = outline.total_bounds
 ax.add_feature(outline_feature) 
 
-ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS) # because total_bounds gives output as xmin, ymin, xmax, ymax,
-#=============================================================================================================
-num_ward = len(ward.ADM1_EN.unique())
-print('Number of unique features: {}'.format(num_ward)) 
+ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
 #=============================================================================================================
 county_colors = ['palegreen', 'chartreuse', 'springgreen', 'cyan', 'lime', 'turquoise', 'aqua', 'deepskyblue']
 
@@ -75,7 +82,7 @@ water_feat = ShapelyFeature(water['geometry'], myCRS,
                             linewidth=1)
 ax.add_feature(water_feat)
 
-town_handle = ax.plot(towns.geometry.x, towns.geometry.y, 's', color='0.5', ms=6, transform=myCRS)
+town_handle = ax.plot(town.geometry.x, town.geometry.y, 's', color='0.5', ms=6, transform=myCRS)
 #=============================================================================================================
 county_handles = generate_handles(ward.ADM1_EN.unique(), county_colors, alpha=0.25)
 
@@ -86,8 +93,8 @@ nice_names = [name.title() for name in county_names]
 handles = county_handles + water_handle  + town_handle
 labels = nice_names + ['Lakes', 'Towns']
 
-leg = ax.legend(handles, labels, title='Legend', title_fontsize=14, 
-                 fontsize=12, loc='upper left', frameon=True, framealpha=1)
+leg = ax.legend(handles, labels, title='Legend', title_fontsize=12, 
+                 fontsize=10, loc='upper right', frameon=True, framealpha=1)
 
 #=============================================================================================================
 gridlines = ax.gridlines(draw_labels=True,
@@ -97,10 +104,24 @@ gridlines.left_labels = False # turn off the left-side labels
 gridlines.bottom_labels = False # turn off the bottom labels
 ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS) # set the extent to the boundaries of the NI outline
 #=============================================================================================================
-for i, row in towns.iterrows():
+for i, row in town.iterrows():
     x, y = row.geometry.x, row.geometry.y # get the x,y location for each town
     plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) # use plt.text to place a label at x,y
 #=============================================================================================================
-scale_bar(ax)
+#START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
+#This section follows the map and intends to produce a short report on statistics for the region
 #=============================================================================================================
-myFig.savefig('mapChar1.png', bbox_inches='tight', dpi=300)
+print('Descriptive Statistics for Bangladesh') #section header
+#=============================================================================================================
+#Calculating number of states in Bangladesh
+num_ward = len(ward.ADM1_EN.unique())
+print('1) Number of administrative states: {}'.format(num_ward)) 
+#=============================================================================================================
+#Finding the number of major urban areas overall
+rows, cols = town.shape  
+print('2) Number of Major Towns: {}'.format(rows))
+#=============================================================================================================
+#Calculating size of each area
+print('3) Average size of state:') 
+ward['AREA_SQKM'] = ward['Shape_Area'] / 1e6 / 3.2808399 / 3.2808399  
+ward['AREA_SQKM'].mean()
