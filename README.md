@@ -8,4 +8,4 @@ Map 2: A focus on the study area of Chittagong, with analysis of the region and 
 
 Map 3: Geographic analysis conducted and results displayed on map
 
-All analysis is written in python.
+All analysis is written in python. Data was sourced from the Centre for Humanitarian Data, at data.humdata.org, and is also provided in a folder in this repository for easy access.
