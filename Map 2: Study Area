@@ -1,6 +1,3 @@
-#=============================================================================================================
-#SECTION 1 - CREATION OF MAP - SECTION 1 - CREATION OF MAP - SECTION 1 - CREATION OF MAP - SECTION 1
-#=============================================================================================================
 %matplotlib notebook
 
 import geopandas as gpd
@@ -39,27 +36,22 @@ def scale_bar(ax, location=(0.92, 0.95)):
     plt.text(sbx-12500, sby-4500, '10 km', transform=tmc, fontsize=8)
     plt.text(sbx-24500, sby-4500, '0 km', transform=tmc, fontsize=8)
 
+#This is the outline of Chittagong state
 chitt = gpd.read_file('BangladeshData/chittagong.shp')
 
 #=============================================================================================================
 ward = gpd.read_file('BangladeshData/chittwards.shp')
 towns = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
-#road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
+road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
 school = gpd.read_file('BangladeshData/hotosm_bgd_southeast_education_facilities_points_shp/hotosm_bgd_southeast_education_facilities_points.shp')
 hosp = gpd.read_file('BangladeshData/hotosm_bgd_southeast_health_facilities_points_shp/hotosm_bgd_southeast_health_facilities_points.shp')
 #=============================================================================================================
-#DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK DATA CHECK 
-#CHECK CRS OF ALL LAYERS
-#=============================================================================================================
+#Title of map
 print('Section 1: Close up map of the Chittagong region')
 
 myFig2 = plt.figure(figsize=(12, 12))  
-
 myCRS = ccrs.UTM(29)  
-
 ax = plt.axes(projection=ccrs.Mercator()) 
-#=============================================================================================================
-#SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__SELECT CHITTAGONG REGION__
 #=============================================================================================================
 chitt_feature = ShapelyFeature(chitt['geometry'], myCRS, edgecolor='k', facecolor='w')
 xmin, ymin, xmax, ymax = chitt.total_bounds
@@ -69,7 +61,7 @@ ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
 #=============================================================================================================
 clippedtown = gpd.clip(towns, chitt)
 clippedhosp = gpd.clip(hosp, chitt)
-#clippedroad = gpd.clip(road, chitt)
+#clippedroad = gpd.clip(road, chitt) this layer is too large and appears to cause the system to freeze
 clippedschool = gpd.clip(school, chitt)
 #=============================================================================================================
 #road_feat = ShapelyFeature(clippedroad['geometry'], myCRS, 
@@ -78,10 +70,11 @@ clippedschool = gpd.clip(school, chitt)
 #                            linewidth=1)
 #ax.add_feature(road_feat) #have removed roads from displaying as they resulted in a messy appearance
 
-school_handle = ax.plot(school.geometry.x, school.geometry.y, 's', color='red', ms=2, transform=myCRS)
+school_handle = ax.plot(clippedschool.geometry.x, clippedschool.geometry.y, 's', color='red', ms=2, transform=myCRS)
 hosp_handle = ax.plot(clippedhosp.geometry.x, clippedhosp.geometry.y, 's', color='blue', ms=2, transform=myCRS)
 town_handle = ax.plot(clippedtown.geometry.x, clippedtown.geometry.y, 's', color='yellow', ms=4, transform=myCRS)
 #=============================================================================================================
+#adding colors to each ward in Chittagong state
 ward_colors = ['brown', 'chartreuse', 'springgreen', 'cyan', 'lime', 'turquoise', 'green', 'pink', 'orange', 'black', 'indigo']
 
 ward_names = list(ward.ADM2_EN.unique())
@@ -122,14 +115,21 @@ for i, row in clippedtown.iterrows():
     x, y = row.geometry.x, row.geometry.y
     plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) 
 #=============================================================================================================
-scale_bar(ax)
-#=============================================================================================================
 #START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
+#This section follows the map and intends to produce a short report on statistics for the region
 #=============================================================================================================
 print('Section 2: Analysis')
-
+print('Here we can extract some information from the layers using python functions.')
+#=============================================================================================================
+#This shows the number of wards within the state
 num_ward = len(ward.ADM2_EN.unique())
 print('1) Number of administrative wards within Chittagong state: {}'.format(num_ward)) 
 #=============================================================================================================
+#Calculating the sum of road types for each ward. Though the data has not been included visually it is still
+#useful to include it in analysis. A join function has been used to join the data to the ward boundaries
+print('2) Sum of each road type grouped by administrative ward.')
+join = gpd.sjoin(ward, road, how='inner', lsuffix='left', rsuffix='right') # perform the spatial join
+join
 
-print('2) Table displaying population, education and hospital facilities within each administrative state.')
+join_total = join['Shape_Leng'].sum()
+print(join.groupby(['ADM2_EN', 'highway'])['Shape_Leng'].sum() / 1000)
