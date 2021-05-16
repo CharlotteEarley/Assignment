@@ -1,5 +1,5 @@
 %matplotlib notebook
-
+            #import the required modules
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point, LineString, Polygon
@@ -39,32 +39,38 @@ def scale_bar(ax, location=(0.92, 0.95)):
     plt.text(sbx-12500, sby-4500, '10 km', transform=tmc, fontsize=8)
     plt.text(sbx-24500, sby-4500, '0 km', transform=tmc, fontsize=8)
 
+    #import the outline of Bangladesh
 outline = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDoutline.shp')
 
 #=============================================================================================================
+    #import rest of data
 ward = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDward.shp')
 water = gpd.read_file('BangladeshData/bgd_watcrsa_1m_iscgm/bgd_watcrsa_1m_iscgm.shp')
 town = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
 road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
 #=============================================================================================================
+    #this prints a short introduction to provide a bit of background to the reader
 print('Map 1 - Introduction to Bangladesh')
 print('Bangladesh is a country in South East Asia known for it''s large, growing population, and for having the world''s longest beach.')
 print('Bangladesh faces a range of environmental and economic pressures. This country is one of the lowest lying in the')
 print('world and is predicted to lose a large section of land to increasing sea level rises.')
 print('It also has the largest mangrove forest in the world, the Sundarbans, which is home to many endangered species.')
-print('Below figure 1 are some descriptive statistics to provide a context for Bangladesh.')
+print('Below figure 1 are some descriptive statistics for Bangladesh.')
 #=============================================================================================================
+    #creating the map display
 myCRS = ccrs.UTM(29) 
 myFig2 = plt.subplots(figsize=(12, 12), subplot_kw=dict(projection=myCRS))   
 ax = plt.axes(projection=ccrs.Mercator())
 #fig, ax = plt.subplots(1, 1, figsize=(10, 10), subplot_kw=dict(projection=myCRS)) 
 #=============================================================================================================
+    #setting the outline
 outline_feature = ShapelyFeature(outline['geometry'], myCRS, edgecolor='k', facecolor='w')
 xmin, ymin, xmax, ymax = outline.total_bounds
 ax.add_feature(outline_feature) 
 
 ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
 #=============================================================================================================
+    #assigning colours to the states
 county_colors = ['palegreen', 'chartreuse', 'springgreen', 'cyan', 'lime', 'turquoise', 'aqua', 'deepskyblue']
 
 county_names = list(ward.ADM1_EN.unique())
@@ -78,6 +84,7 @@ for i, name in enumerate(county_names):
                           alpha=0.25)
     ax.add_feature(feat)
 #=============================================================================================================
+    #adding data, towns and rivers
 water_feat = ShapelyFeature(water['geometry'], myCRS, 
                             edgecolor='mediumblue', 
                             facecolor='mediumblue',
@@ -86,6 +93,7 @@ ax.add_feature(water_feat)
 
 town_handle = ax.plot(town.geometry.x, town.geometry.y, 's', color='0.5', ms=6, transform=myCRS)
 #=============================================================================================================
+    #creating a legend, this will placed to the upper right for map 1
 county_handles = generate_handles(ward.ADM1_EN.unique(), county_colors, alpha=0.25)
 
 water_handle = generate_handles(['Lakes'], ['mediumblue'])
@@ -97,70 +105,56 @@ labels = nice_names + ['Lakes', 'Towns']
 
 leg = ax.legend(handles, labels, title='Legend', title_fontsize=12, 
                  fontsize=10, loc='upper right', frameon=True, framealpha=1)
-
 #=============================================================================================================
-gridlines = ax.gridlines(draw_labels=True,
-                         xlocs=[-8, -7.5, -7, -6.5, -6, -5.5], 
-                         ylocs=[54, 54.5, 55, 55.5])
-gridlines.left_labels = False # turn off the left-side labels
-gridlines.bottom_labels = False # turn off the bottom labels
-ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS) # set the extent to the boundaries of the NI outline
-#=============================================================================================================
+    #creating labels for each town
 for i, row in town.iterrows():
-    x, y = row.geometry.x, row.geometry.y # get the x,y location for each town
-    plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) # use plt.text to place a label at x,y
+    x, y = row.geometry.x, row.geometry.y 
+    plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) 
 #=============================================================================================================
 #START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
 #This section follows the map and intends to produce a short report on statistics for the region
 #=============================================================================================================
 print('Descriptive Statistics for Bangladesh') #section header
 #=============================================================================================================
-#Calculating number of states in Bangladesh
+    #Calculating number of states in Bangladesh
 num_ward = len(ward.ADM1_EN.unique())
 print('1) Number of administrative states: {}'.format(num_ward)) 
 #=============================================================================================================
-#Finding the number of major urban areas overall
+    #Finding the number of major urban areas overall
 rows, cols = town.shape  
 print('2) Number of Major Towns: {}'.format(rows))
 #=============================================================================================================
-#Calculating size of each area
-print('3) Average size of state:') 
-ward['AREA_SQKM'] = ward['Shape_Area'] / 1e6 / 3.2808399 / 3.2808399  
-ward['AREA_SQKM'].mean()
-
+    #Calculating size of each area, needs work, commented out
+#print('3) Average size of state: {}'.format(ward)) 
+#ward['AREA_SQKM'] = ward['Shape_Area'] / 1e6 / 3.2808399 / 3.2808399  
+#ward['AREA_SQKM'].mean()
 
 #==================================================================================
+    #This section sets a background image, the image has been sourced from Google Earth Pro
 dataset = rio.open('BangladeshData/bestbang.tif')
-
-
+#=============================================================================================================
+    #This provides some information for the raster image
+print('4) Detail of the raster image background:')
 print('{} opened in {} mode'.format(dataset.name,dataset.mode))
 print('image has {} band(s)'.format(dataset.count))
 print('image size (width, height): {} x {}'.format(dataset.width, dataset.height))
-print('band 1 dataype is {}'.format(dataset.dtypes[0])) # note that the band name (Band 1) differs from the list index [0]
-
+print('band 1 dataype is {}'.format(dataset.dtypes[0]))
 print(dataset.crs)
-
+#=============================================================================================================
 with rio.open('BangladeshData/bestbang.tif') as dataset:
     img = dataset.read()
     xmin, ymin, xmax, ymax = dataset.bounds 
 
-#myCRS = ccrs.UTM(29) # note that this matches with the CRS of our image
-#fig, ax = plt.subplots(1, 1, figsize=(10, 10), subplot_kw=dict(projection=myCRS))
-
-#ax.imshow(img[2], cmap='gray', vmin=200, vmax=5000)
 ax.imshow(img[2], cmap='gray', vmin=200, vmax=5000, transform=myCRS, extent=[xmin, xmax, ymin, ymax])
-#ax.imshow(img[0:3], transform=myCRS, extent=[xmin, xmax, ymin, ymax])
+
 def img_display(image, ax, bands, transform, extent):
-    '''
-    This is where you should write a docstring.
-    '''
-    # first, we transpose the image to re-order the indices
+    
     dispimg = image.transpose([1, 2, 0])
-    
-    # next, we have to scale the image.
+#=============================================================================================================
+    # This will scale the image
     dispimg = dispimg / dispimg.max()
-    
-    # finally, we display the image
+#=============================================================================================================
+    # This will display the image
     handle = ax.imshow(dispimg[:, :, bands], transform=transform, extent=extent)
     
     return handle, ax
@@ -169,66 +163,36 @@ maxvals = [img[i].max() for i in range(dataset.count)]
 print(maxvals)
 
 def percentile_stretch(image, pmin=0., pmax=100.):
-    '''
-    This is where you should write a docstring.
-    '''
-    # here, we make sure that pmin < pmax, and that they are between 0, 100
+#=============================================================================================================
+    # Data checking controls
     if not 0 <= pmin < pmax <= 100:
         raise ValueError('0 <= pmin < pmax <= 100')
-    # here, we make sure that the image is only 2-dimensional
+
     if not image.ndim == 2:
         raise ValueError('Image can only have two dimensions (row, column)')
     
     minval = np.percentile(image, pmin)
     maxval = np.percentile(image, pmax)
     
-    stretched = (image - minval) / (maxval - minval) # stretch the image to 0, 1
-    stretched[image < minval] = 0 # set anything less than minval to the new minimum, 0.
-    stretched[image > maxval] = 1 # set anything greater than maxval to the new maximum, 1.
+    stretched = (image - minval) / (maxval - minval) 
+    stretched[image < minval] = 0 
+    stretched[image > maxval] = 1 
     
     return stretched
 
 def img_display(image, ax, bands, transform, extent, pmin=0, pmax=100):
-    '''
-    This is where you should write a docstring.
-    '''
-    dispimg = image.copy().astype(np.float32) # make a copy of the original image,
-    # but be sure to cast it as a floating-point image, rather than an integer
 
-    for b in range(image.shape[0]): # loop over each band, stretching using percentile_stretch()
+    dispimg = image.copy().astype(np.float32) 
+
+    for b in range(image.shape[0]): 
         dispimg[b] = percentile_stretch(image[b], pmin=pmin, pmax=pmax)
 
-    # next, we transpose the image to re-order the indices
     dispimg = dispimg.transpose([1, 2, 0])
-    
-    # finally, we display the image
+#=============================================================================================================    
+    # This displays the image
     handle = ax.imshow(dispimg[:, :, bands], transform=transform, extent=extent)
     
     return handle, ax
 
 h, ax = img_display(img, ax, [2, 1, 0], myCRS, [xmin, xmax, ymin, ymax], pmin=0.1, pmax=99.9)
-#==================================================================================
-#dst_crs = 'epsg:4326'
-
-#with rio.open('BangladeshData/bangladesh_tmo_2011313.jpg') as src:
-#    transform, width, height = rio.warp.calculate_default_transform(
-#            src.crs, dst_crs, src.width, src.height, *src.bounds)
-#    kwargs = src.meta.copy() # this copies the meta dict object
-#    kwargs.update({
-#        'crs': dst_crs,
-#        'transform': transform,
-#        'width': width,
-#        'height': height
-#    }) # note: to change the values in a dictionary, we use the update() method
-    
-#    with rio.open('BangladeshData/bangladesh_newcrs.jpg', 'w', **kwargs) as dst:
-#        for i in range(1, src.count + 1): # ranging from 1 to the number of bands + 1
-#            rio.warp.reproject(
-#                source=rio.band(src, i),
-#                destination=rio.band(dst, i),
-#                src_transform=src.transform,
-#                src_crs=src.crs,
-#                dst_transform=transform,
-#                dst_crs=dst_crs,
-#                resampling=rio.warp.Resampling.nearest)
-#dataset.crs
+#=============================================================================================================
