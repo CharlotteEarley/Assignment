@@ -1,5 +1,7 @@
 # Assignment
 
+Purpose of tool
+
 The aim of this study is to determine which regions of Chittagong, Bangladesh, currently have least access to medical and educational services. This repository contains instructions to load three detailed maps, and information on how to interpret the readout produced.
 
 Map 1: Overview of Bangladesh.
@@ -14,4 +16,6 @@ Map 3: Chloropleth map of population in Chittagong.
 
 This map shows population distribution across the state of Chittagong at ward level. We can see which states have the highest population and that to the eastern border population density drops considerably.
 
-All analysis is written in python. Data was sourced from the Centre for Humanitarian Data, at data.humdata.org, and is also provided in a folder in this repository for easy access.
+Instructions for Setup and Use
+
+Files in this repository will demonstrate dependencies of modules required. All analysis is written in python. Data was sourced from the Centre for Humanitarian Data, at data.humdata.org, and is also provided in a folder in this repository for easy access. 
