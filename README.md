@@ -6,9 +6,9 @@ Map 1: Overview of Bangladesh.
 
 This map shows rivers and states within the country of Bangladesh. It also features a raster layer backdrop for context.
 
-Map 2: A focus on the study area of Chittagong, with analysis of the region and descriptive statistics.
+Map 2: A focus on the study area of Chittagong.
 
-Map 2 looks at the Chittagong state in more detail. At the end of this script a short bit of analysis printout is included.
+Map 2 looks at the Chittagong state in more detail. At the end of this script a short bit of analysis printout is included, with analysis of the region and descriptive statistics.
 
 Map 3: Chloropleth map of population in Chittagong.
 
