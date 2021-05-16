@@ -8,42 +8,40 @@ import matplotlib.patches as mpatches
 
 
 def generate_handles(labels, colors, edge='k', alpha=1):
-    lc = len(colors)  # get the length of the color list
+    lc = len(colors)  
     handles = []
     for i in range(len(labels)):
         handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors[i % lc], edgecolor=edge, alpha=alpha))
     return handles
 
 # ---------------------------------------------------------------------------------------------------------------------
-
-towns = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
-clippedtown = gpd.clip(towns, chitt)
-town_handle = ax.plot(towns.geometry.x, towns.geometry.y, 's', color='yellow', ms=4, transform=myCRS)
+        #importing necessary data
 ward2 = gpd.read_file('BangladeshData/chittwards.shp')
 ward3 = gpd.read_file('BangladeshData/Ward3popClip.shp')
 
-    
-# load the data and transform to the UTM projection 29
+# ---------------------------------------------------------------------------------------------------------------------
+        # load the data and transform to the UTM projection 29
 myCRS = ccrs.UTM(29)
 fig, ax = plt.subplots(1, 1, figsize=(10, 10), subplot_kw=dict(projection=myCRS))
-
+# ---------------------------------------------------------------------------------------------------------------------
 gridlines = ax.gridlines(draw_labels=True,
                          xlocs=[-8, -7.5, -7, -6.5, -6, -5.5],
                          ylocs=[54, 54.5, 55, 55.5])
 gridlines.right_labels = False
 gridlines.bottom_labels = False
-
-# creating the colorbar for the map
+# ---------------------------------------------------------------------------------------------------------------------
+        # creating the colorbar for the map
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.1, axes_class=plt.Axes)
-
-# plotting the ward data into the axis
+# ---------------------------------------------------------------------------------------------------------------------
+        # plotting the ward data into the axis
 ward_plot = ward3.plot(column='P', ax=ax, vmin=80000, vmax=700000, cmap='viridis',
                        legend=True, cax=cax, legend_kwds={'label': 'Resident Population'})
-
+# ---------------------------------------------------------------------------------------------------------------------
 county_outlines = ShapelyFeature(ward2['geometry'], myCRS, edgecolor='r', facecolor='none')
 
 ax.add_feature(county_outlines)
 county_handles = generate_handles([''], ['none'], edge='r')
-
-ax.legend(county_handles, ['County Boundaries'], fontsize=12, loc='upper left', framealpha=1)
+# ---------------------------------------------------------------------------------------------------------------------
+        #creating a small legend
+ax.legend(county_handles, ['County Boundaries'], fontsize=12, loc='lower left', framealpha=1)
