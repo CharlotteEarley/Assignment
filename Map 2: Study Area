@@ -1,5 +1,5 @@
 %matplotlib notebook
-
+     #importing necessary modules
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point, LineString, Polygon
@@ -36,34 +36,42 @@ def scale_bar(ax, location=(0.92, 0.95)):
     plt.text(sbx-12500, sby-4500, '10 km', transform=tmc, fontsize=8)
     plt.text(sbx-24500, sby-4500, '0 km', transform=tmc, fontsize=8)
 
-#This is the outline of Chittagong state
+        #importing Chittagong state to act as the outline
 chitt = gpd.read_file('BangladeshData/chittagong.shp')
 
 #=============================================================================================================
+        #importing other necessary data
 ward = gpd.read_file('BangladeshData/chittwards.shp')
 towns = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
 road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
 school = gpd.read_file('BangladeshData/hotosm_bgd_southeast_education_facilities_points_shp/hotosm_bgd_southeast_education_facilities_points.shp')
 hosp = gpd.read_file('BangladeshData/hotosm_bgd_southeast_health_facilities_points_shp/hotosm_bgd_southeast_health_facilities_points.shp')
 #=============================================================================================================
-#Title of map
+        #Title of map and map introduction
 print('Section 1: Close up map of the Chittagong region')
-
+print('Chittagong is famous for having the world''s longest beach. On the eastern border is the country of Myanmar,')
+print('which has been in the news recently as many Rohingya refugees have fled the country. This has put pressure on')
+print('a state already struggling with poverty and population crowding.')
+#=============================================================================================================
+        #displaying the map
 myFig2 = plt.figure(figsize=(12, 12))  
 myCRS = ccrs.UTM(29)  
 ax = plt.axes(projection=ccrs.Mercator()) 
 #=============================================================================================================
+        #selecting Chittagong as the outline
 chitt_feature = ShapelyFeature(chitt['geometry'], myCRS, edgecolor='k', facecolor='w')
 xmin, ymin, xmax, ymax = chitt.total_bounds
 ax.add_feature(chitt_feature) 
 
 ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
 #=============================================================================================================
+        #clipping data sets to Chittagong, roads could not be clipped as this caused the programme to freeze, workaround used
 clippedtown = gpd.clip(towns, chitt)
 clippedhosp = gpd.clip(hosp, chitt)
 #clippedroad = gpd.clip(road, chitt) this layer is too large and appears to cause the system to freeze
 clippedschool = gpd.clip(school, chitt)
 #=============================================================================================================
+        #adding data, decided to remove roads from display but still present for analysis
 #road_feat = ShapelyFeature(clippedroad['geometry'], myCRS, 
 #                            edgecolor='mediumblue', 
 #                            facecolor='mediumblue',
@@ -74,7 +82,7 @@ school_handle = ax.plot(clippedschool.geometry.x, clippedschool.geometry.y, 's',
 hosp_handle = ax.plot(clippedhosp.geometry.x, clippedhosp.geometry.y, 's', color='blue', ms=2, transform=myCRS)
 town_handle = ax.plot(clippedtown.geometry.x, clippedtown.geometry.y, 's', color='yellow', ms=4, transform=myCRS)
 #=============================================================================================================
-#adding colors to each ward in Chittagong state
+        #adding colors to each ward in Chittagong state
 ward_colors = ['brown', 'chartreuse', 'springgreen', 'cyan', 'lime', 'turquoise', 'green', 'pink', 'orange', 'black', 'indigo']
 
 ward_names = list(ward.ADM2_EN.unique())
@@ -88,7 +96,7 @@ for i, name in enumerate(ward_names):
                           alpha=0.25)
     ax.add_feature(feat)
 #=============================================================================================================
-#making a legend
+        #making a legend, this time the legend will be in the bottom left and the text size has been changed
 ward_handles = generate_handles(ward.ADM2_EN.unique(), ward_colors, alpha=0.25)
 
 hosp_handle = generate_handles(['name'], ['mediumblue'])
@@ -104,18 +112,12 @@ leg = ax.legend(handles, labels, title='Legend', title_fontsize=12,
               fontsize=10, loc='lower left', frameon=True, framealpha=1)
 
 #=============================================================================================================
-gridlines = ax.gridlines(draw_labels=True,
-                         xlocs=[-8, -7.5, -7, -6.5, -6, -5.5], 
-                         ylocs=[54, 54.5, 55, 55.5])
-gridlines.left_labels = False
-gridlines.bottom_labels = False 
-ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
-#=============================================================================================================
+        #creating labels for towns
 for i, row in clippedtown.iterrows():
     x, y = row.geometry.x, row.geometry.y
     plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) 
 #=============================================================================================================
-#START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
+#START OF ANALYSIS SECTION 
 #This section follows the map and intends to produce a short report on statistics for the region
 #=============================================================================================================
 print('Section 2: Analysis')
@@ -132,4 +134,9 @@ join = gpd.sjoin(ward, road, how='inner', lsuffix='left', rsuffix='right') # per
 join
 
 join_total = join['Shape_Leng'].sum()
-print(join.groupby(['ADM2_EN', 'highway'])['Shape_Leng'].sum() / 1000)
+print(join.groupby(['ADM2_EN', 'highway'])['Shape_Leng'].sum() / 1000) # summarize the road lengths by CountyName, Road_class
+
+#KEEPING FOR FURTHER ANALYSIS
+#sum_road = road['geometry'].sum()
+#print('{:.2f} total m of motorway'.format(sum_motorway))
+#road.crs
