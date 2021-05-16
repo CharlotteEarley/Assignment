@@ -45,3 +45,12 @@ county_handles = generate_handles([''], ['none'], edge='r')
 # ---------------------------------------------------------------------------------------------------------------------
         #creating a small legend
 ax.legend(county_handles, ['County Boundaries'], fontsize=12, loc='lower left', framealpha=1)
+# ---------------------------------------------------------------------------------------------------------------------
+        #Analysis
+print('Map 3: Choropleth of Chittagong Population Density')    
+print('The map below shows population level across the state of Chittagong. Using python we can quickly see the administrative')
+print('wards with the highest and lowest populations.')   
+list1 = ward3.ADM3_EN
+list2 = ward3.P
+print("State with highest population: ", max(list1))
+print("Population in this state: ", max(list2))
