@@ -1,0 +1,173 @@
+            #import the required modules
+import geopandas as gpd
+import pandas as pd
+from shapely.geometry import Point, LineString, Polygon
+from cartopy.feature import ShapelyFeature
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
+import numpy as np
+import rasterio as rio
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+import rasterio.warp
+
+plt.ion()
+
+def generate_handles(labels, colors, edge='k', alpha=1):
+    lc = len(colors)
+    handles = []
+    for i in range(len(labels)):
+        handles.append(mpatches.Rectangle((0, 0), 1, 1, facecolor=colors[i % lc], edgecolor=edge, alpha=alpha))
+    return handles
+
+#def scale_bar(ax, location=(0.92, 0.95)):
+#    llx0, llx1, lly0, lly1 = ax.get_extent(ccrs.PlateCarree())
+#    sbllx = (llx1 + llx0) / 2
+#    sblly = lly0 + (lly1 - lly0) * location[1]
+
+#    tmc = ccrs.TransverseMercator(sbllx, sblly)
+#    x0, x1, y0, y1 = ax.get_extent(tmc)
+#    sbx = x0 + (x1 - x0) * location[0]
+#    sby = y0 + (y1 - y0) * location[1]
+
+#    plt.plot([sbx, sbx - 20000], [sby, sby], color='k', linewidth=9, transform=tmc)
+#    plt.plot([sbx, sbx - 10000], [sby, sby], color='k', linewidth=6, transform=tmc)
+#    plt.plot([sbx-10000, sbx - 20000], [sby, sby], color='w', linewidth=6, transform=tmc)
+
+#    plt.text(sbx, sby-4500, '20 km', transform=tmc, fontsize=8)
+#    plt.text(sbx-12500, sby-4500, '10 km', transform=tmc, fontsize=8)
+#    plt.text(sbx-24500, sby-4500, '0 km', transform=tmc, fontsize=8)
+
+    #import the outline of Bangladesh
+outline = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDoutline.shp')
+
+#=============================================================================================================
+    #import rest of data
+ward = gpd.read_file('BangladeshData/bgd_adm_bbs_20201113_shp/BGDward.shp')
+water = gpd.read_file('BangladeshData/bgd_watcrsa_1m_iscgm/bgd_watcrsa_1m_iscgm.shp')
+town = gpd.read_file('BangladeshData/bgd_majtowns/bgd_majtowns.shp')
+road = gpd.read_file('BangladeshData/hotosm_bgd_southeast_roads_lines_shp/hotosm_bgd_southeast_roads_lines.shp')
+#=============================================================================================================
+    #this prints a short introduction to provide a bit of background to the reader
+print('Map 1 - Introduction to Bangladesh')
+print('Bangladesh is a country in South East Asia known for it''s large, growing population, and for having the world''s longest beach.')
+print('Bangladesh faces a range of environmental and economic pressures. This country is one of the lowest lying in the')
+print('world and is predicted to lose a large section of land to increasing sea level rises.')
+print('It also has the largest mangrove forest in the world, the Sundarbans, which is home to many endangered species.')
+print('Below figure 1 are some descriptive statistics for Bangladesh.')
+#=============================================================================================================
+    #creating the map display
+myCRS = ccrs.UTM(29) 
+myFig2 = plt.subplots(figsize=(12, 12), subplot_kw=dict(projection=myCRS))   
+ax = plt.axes(projection=ccrs.Mercator())
+#fig, ax = plt.subplots(1, 1, figsize=(10, 10), subplot_kw=dict(projection=myCRS)) 
+#=============================================================================================================
+    #setting the outline
+outline_feature = ShapelyFeature(outline['geometry'], myCRS, facecolor='none')
+xmin, ymin, xmax, ymax = outline.total_bounds
+ax.add_feature(outline_feature) 
+
+ax.set_extent([xmin, xmax, ymin, ymax], crs=myCRS)
+#=============================================================================================================
+#=============================================================================================================
+    #adding data, towns and rivers
+water_feat = ShapelyFeature(water['geometry'], myCRS, 
+                            edgecolor='mediumblue', 
+                            facecolor='mediumblue',
+                            linewidth=1)
+ax.add_feature(water_feat)
+
+town_handle = ax.plot(town.geometry.x, town.geometry.y, 's', color='0.5', ms=6, transform=myCRS)
+#=============================================================================================================
+county_outlines = ShapelyFeature(ward['geometry'], myCRS, edgecolor='r', facecolor='none')
+
+ax.add_feature(county_outlines)
+county_handles = generate_handles([''], ['none'], edge='r')
+
+ax.legend(county_handles, ['County Boundaries'], fontsize=12, loc='upper left', framealpha=1)
+#=============================================================================================================
+    #creating labels for each town
+for i, row in town.iterrows():
+    x, y = row.geometry.x, row.geometry.y 
+    plt.text(x, y, row['nam'].title(), fontsize=8, transform=myCRS) 
+#=============================================================================================================
+#START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF ANALYSIS = START OF 
+#This section follows the map and intends to produce a short report on statistics for the region
+#=============================================================================================================
+print('Descriptive Statistics for Bangladesh') #section header
+#=============================================================================================================
+    #Calculating number of states in Bangladesh
+num_ward = len(ward.ADM1_EN.unique())
+print('1) Number of administrative states: {}'.format(num_ward)) 
+#=============================================================================================================
+    #Finding the number of major urban areas overall
+rows, cols = town.shape  
+print('2) Number of Major Towns: {}'.format(rows))
+
+#==================================================================================
+    #This section sets a background image, the image has been sourced from Google Earth Pro
+dataset = rio.open('BangladeshData/bangladesh_tmo_2011313_geo.tif')
+#=============================================================================================================
+    #This provides some information for the raster image
+print('4) Detail of the raster image background:')
+print('{} opened in {} mode'.format(dataset.name,dataset.mode))
+print('image has {} band(s)'.format(dataset.count))
+print('image size (width, height): {} x {}'.format(dataset.width, dataset.height))
+print('band 1 dataype is {}'.format(dataset.dtypes[0]))
+print(dataset.crs)
+#=============================================================================================================
+with rio.open('BangladeshData/bangladesh_tmo_2011313_geo.tif') as dataset:
+    img = dataset.read()
+    xmin, ymin, xmax, ymax = dataset.bounds 
+
+ax.imshow(img[2], cmap='gray', vmin=200, vmax=5000, transform=myCRS, extent=[xmin, xmax, ymin, ymax])
+
+def img_display(image, ax, bands, transform, extent):
+    
+    dispimg = image.transpose([1, 2, 0])
+#=============================================================================================================
+    # This will scale the image
+    dispimg = dispimg / dispimg.max()
+#=============================================================================================================
+    # This will display the image
+    handle = ax.imshow(dispimg[:, :, bands], transform=transform, extent=extent)
+    
+    return handle, ax
+h, ax = img_display(img, ax, [2, 1, 0], myCRS, [xmin, xmax, ymin, ymax])
+maxvals = [img[i].max() for i in range(dataset.count)]
+print(maxvals)
+
+def percentile_stretch(image, pmin=0., pmax=100.):
+#=============================================================================================================
+    # Data checking controls
+    if not 0 <= pmin < pmax <= 100:
+        raise ValueError('0 <= pmin < pmax <= 100')
+
+    if not image.ndim == 2:
+        raise ValueError('Image can only have two dimensions (row, column)')
+    
+    minval = np.percentile(image, pmin)
+    maxval = np.percentile(image, pmax)
+    
+    stretched = (image - minval) / (maxval - minval) 
+    stretched[image < minval] = 0 
+    stretched[image > maxval] = 1 
+    
+    return stretched
+
+def img_display(image, ax, bands, transform, extent, pmin=0, pmax=100):
+
+    dispimg = image.copy().astype(np.float32) 
+
+    for b in range(image.shape[0]): 
+        dispimg[b] = percentile_stretch(image[b], pmin=pmin, pmax=pmax)
+
+    dispimg = dispimg.transpose([1, 2, 0])
+#=============================================================================================================    
+    # This displays the image
+    handle = ax.imshow(dispimg[:, :, bands], transform=transform, extent=extent)
+    
+    return handle, ax
+
+h, ax = img_display(img, ax, [2, 1, 0], myCRS, [xmin, xmax, ymin, ymax], pmin=0.1, pmax=99.9)
+#=============================================================================================================
