@@ -19,3 +19,5 @@ This map shows population distribution across the state of Chittagong at ward le
 Instructions for Setup and Use
 
 Files in this repository will demonstrate dependencies of modules required. All analysis is written in python. Data was sourced from the Centre for Humanitarian Data, at data.humdata.org, and is also provided in a folder in this repository for easy access. 
+
+Raster data available at https://www.dropbox.com/s/vlflac0bb67hk1c/bangladesh_tmo_2011313_geo.tif?dl=0
