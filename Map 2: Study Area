@@ -1,4 +1,3 @@
-%matplotlib notebook
      #importing necessary modules
 import geopandas as gpd
 import pandas as pd
